@@ -279,6 +279,8 @@ class SettingsScreen(ModalScreen[str | None]):
     BINDINGS = [
         ("escape", "dismiss_settings", "Close"),
         ("q", "dismiss_settings", "Close"),
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
     ]
 
     def __init__(self, current_theme: str, all_themes: dict[str, Theme]):
@@ -317,7 +319,7 @@ class SettingsScreen(ModalScreen[str | None]):
         with Container(id="settings-dialog"):
             yield Static("[bold cyan]Settings - Color Schemes[/bold cyan]", id="settings-title")
             yield ListView(id="settings-list")
-            yield Static("\n[dim]Use ↑/↓ to preview themes, Enter to apply, Esc/q to cancel[/dim]", id="settings-footer")
+            yield Static("\n[dim]Use ↑/↓ or j/k to preview themes, Enter to apply, Esc/q to cancel[/dim]", id="settings-footer")
 
     def on_mount(self) -> None:
         """Populate the list when mounted."""
@@ -354,6 +356,16 @@ class SettingsScreen(ModalScreen[str | None]):
         # Restore the original theme since user cancelled
         self.app.theme = self.current_theme
         self.dismiss(None)
+
+    def action_cursor_down(self) -> None:
+        """Move cursor down in the list (vim j key)."""
+        list_view = self.query_one("#settings-list", ListView)
+        list_view.action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        """Move cursor up in the list (vim k key)."""
+        list_view = self.query_one("#settings-list", ListView)
+        list_view.action_cursor_up()
 
 
 class FuzzyFinderScreen(ModalScreen[Path | None]):
