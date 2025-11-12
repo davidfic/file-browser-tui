@@ -107,15 +107,15 @@ The fuzzy finder:
 
 ```
 file-browser-tui/
-├── main.py              # Main application code
-├── pyproject.toml       # Project metadata and dependencies
-├── README.md           # This file
-├── TODO.md             # Future enhancements
-├── .gitignore          # Git ignore rules
-├── .claude/            # Claude Code configuration
-│   ├── rules.yaml      # Coding standards and guidelines
-│   └── plans/          # Development plans (git-ignored)
-└── .python-version     # Python version specification
+  main.py              # Main application code
+  pyproject.toml       # Project metadata and dependencies
+  README.md            # This file
+  TODO.md              # Future enhancements
+  .gitignore           # Git ignore rules
+  .claude/             # Claude Code configuration
+    rules.yaml         # Coding standards and guidelines
+    plans/             # Development plans (git-ignored)
+  .python-version      # Python version specification
 ```
 
 ### Code Organization
