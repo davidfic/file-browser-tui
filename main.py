@@ -13,6 +13,131 @@ from rich.table import Table
 from rapidfuzz import fuzz, process
 
 
+# Color scheme definitions
+COLOR_SCHEMES = {
+    "Tokyo Night": {
+        "background": "#1a1b26",
+        "surface": "#1f2335",
+        "surface_light": "#24283b",
+        "text": "#c0caf5",
+        "blue": "#7aa2f7",
+        "cyan": "#7dcfff",
+        "green": "#9ece6a",
+        "purple": "#9d7cd8",
+        "purple_light": "#bb9af7",
+        "pink": "#f7768e",
+        "yellow": "#e0af68",
+        "orange": "#ff9e64",
+        "border": "#565f89",
+    },
+    "Dracula": {
+        "background": "#282a36",
+        "surface": "#21222c",
+        "surface_light": "#343746",
+        "text": "#f8f8f2",
+        "blue": "#6272a4",
+        "cyan": "#8be9fd",
+        "green": "#50fa7b",
+        "purple": "#bd93f9",
+        "purple_light": "#bd93f9",
+        "pink": "#ff79c6",
+        "yellow": "#f1fa8c",
+        "orange": "#ffb86c",
+        "border": "#44475a",
+    },
+    "Nord": {
+        "background": "#2e3440",
+        "surface": "#3b4252",
+        "surface_light": "#434c5e",
+        "text": "#eceff4",
+        "blue": "#5e81ac",
+        "cyan": "#88c0d0",
+        "green": "#a3be8c",
+        "purple": "#b48ead",
+        "purple_light": "#b48ead",
+        "pink": "#d08770",
+        "yellow": "#ebcb8b",
+        "orange": "#d08770",
+        "border": "#4c566a",
+    },
+    "Catppuccin Mocha": {
+        "background": "#1e1e2e",
+        "surface": "#181825",
+        "surface_light": "#313244",
+        "text": "#cdd6f4",
+        "blue": "#89b4fa",
+        "cyan": "#89dceb",
+        "green": "#a6e3a1",
+        "purple": "#cba6f7",
+        "purple_light": "#f5c2e7",
+        "pink": "#f5c2e7",
+        "yellow": "#f9e2af",
+        "orange": "#fab387",
+        "border": "#45475a",
+    },
+    "Gruvbox Dark": {
+        "background": "#282828",
+        "surface": "#1d2021",
+        "surface_light": "#3c3836",
+        "text": "#ebdbb2",
+        "blue": "#458588",
+        "cyan": "#689d6a",
+        "green": "#98971a",
+        "purple": "#b16286",
+        "purple_light": "#d3869b",
+        "pink": "#d3869b",
+        "yellow": "#d79921",
+        "orange": "#d65d0e",
+        "border": "#504945",
+    },
+    "Solarized Dark": {
+        "background": "#002b36",
+        "surface": "#073642",
+        "surface_light": "#073642",
+        "text": "#839496",
+        "blue": "#268bd2",
+        "cyan": "#2aa198",
+        "green": "#859900",
+        "purple": "#6c71c4",
+        "purple_light": "#d33682",
+        "pink": "#d33682",
+        "yellow": "#b58900",
+        "orange": "#cb4b16",
+        "border": "#586e75",
+    },
+    "One Dark": {
+        "background": "#282c34",
+        "surface": "#21252b",
+        "surface_light": "#2c313c",
+        "text": "#abb2bf",
+        "blue": "#61afef",
+        "cyan": "#56b6c2",
+        "green": "#98c379",
+        "purple": "#c678dd",
+        "purple_light": "#c678dd",
+        "pink": "#e06c75",
+        "yellow": "#e5c07b",
+        "orange": "#d19a66",
+        "border": "#3e4451",
+    },
+    "Monokai Pro": {
+        "background": "#2d2a2e",
+        "surface": "#221f22",
+        "surface_light": "#403e41",
+        "text": "#fcfcfa",
+        "blue": "#78dce8",
+        "cyan": "#78dce8",
+        "green": "#a9dc76",
+        "purple": "#ab9df2",
+        "purple_light": "#ab9df2",
+        "pink": "#ff6188",
+        "yellow": "#ffd866",
+        "orange": "#fc9867",
+        "border": "#5b595c",
+    },
+}
+
+
 class HelpScreen(ModalScreen[None]):
     """Modal screen showing keybindings help."""
 
@@ -68,6 +193,7 @@ class HelpScreen(ModalScreen[None]):
             table.add_row("h", "Go back to parent directory")
             table.add_row(".", "Toggle hidden files")
             table.add_row("Ctrl+F", "Fuzzy find files")
+            table.add_row("s", "Settings (change color scheme)")
             table.add_row("/", "Show this help")
             table.add_row("q", "Quit application")
             table.add_row("Esc", "Close this dialog")
@@ -78,6 +204,92 @@ class HelpScreen(ModalScreen[None]):
     def on_mount(self) -> None:
         """Focus the dialog when mounted."""
         pass
+
+
+class SettingsScreen(ModalScreen[str | None]):
+    """Modal screen for settings and color scheme selection."""
+
+    CSS = """
+    SettingsScreen {
+        align: center middle;
+        background: #00000099;
+    }
+
+    #settings-dialog {
+        width: 70;
+        height: auto;
+        max-height: 80%;
+        border: thick #7dcfff;
+        background: #1f2335;
+        padding: 1 2;
+    }
+
+    #settings-title {
+        color: #7dcfff;
+        text-align: center;
+        margin-bottom: 1;
+    }
+
+    #settings-list {
+        height: auto;
+        max-height: 30;
+        background: #24283b;
+        border: round #565f89;
+        padding: 1;
+    }
+
+    #settings-footer {
+        color: #565f89;
+        text-align: center;
+        margin-top: 1;
+    }
+    """
+
+    BINDINGS = [
+        ("escape", "dismiss_settings", "Close"),
+        ("q", "dismiss_settings", "Close"),
+    ]
+
+    def __init__(self, current_scheme: str):
+        super().__init__()
+        self.current_scheme = current_scheme
+        self.selected_index = 0
+        self.schemes = list(COLOR_SCHEMES.keys())
+        # Find current scheme index
+        try:
+            self.selected_index = self.schemes.index(current_scheme)
+        except ValueError:
+            self.selected_index = 0
+
+    def compose(self) -> ComposeResult:
+        """Create the settings dialog."""
+        with Container(id="settings-dialog"):
+            yield Static("[bold cyan]Settings - Color Schemes[/bold cyan]", id="settings-title")
+            yield ListView(id="settings-list")
+            yield Static("\n[dim]Use ↑/↓ to navigate, Enter to select, Esc/q to close[/dim]", id="settings-footer")
+
+    def on_mount(self) -> None:
+        """Populate the list when mounted."""
+        list_view = self.query_one("#settings-list", ListView)
+
+        for i, scheme_name in enumerate(self.schemes):
+            if i == self.selected_index:
+                label = Label(f"▸ [bold cyan]{scheme_name}[/bold cyan]  [dim](current)[/dim]")
+            else:
+                label = Label(f"  {scheme_name}")
+            list_view.append(ListItem(label))
+
+        list_view.index = self.selected_index
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        """Handle scheme selection."""
+        if event.list_view.index is not None:
+            selected_scheme = self.schemes[event.list_view.index]
+            self.dismiss(selected_scheme)
+
+    def action_dismiss_settings(self) -> None:
+        """Dismiss the settings without selection."""
+        self.dismiss(None)
 
 
 class FuzzyFinderScreen(ModalScreen[Path | None]):
@@ -470,89 +682,10 @@ class FilePreview(Static):
 class FileBrowserApp(App):
     """A Textual file browser application."""
 
-    CSS = """
-    Screen {
-        background: #1a1b26;
-    }
-
-    /* Shared scrollbar styling */
-    Static {
-        scrollbar-color: #565f89;
-        scrollbar-color-hover: #7aa2f7;
-    }
-
-    /* Horizontal container spacing */
-    Horizontal {
-        width: 100%;
-        height: 100%;
-    }
-
-    #info-container {
-        height: 5;
-        dock: top;
-        background: #1a1b26;
-    }
-
-    #info-container Horizontal {
-        padding: 0 1;
-    }
-
-    InfoBox {
-        border: round #565f89;
-        background: #24283b;
-        height: 100%;
-        width: 1fr;
-        padding: 0 1;
-        margin: 0 0 0 1;
-        color: #c0caf5;
-        content-align: center middle;
-    }
-
-    InfoBox:first-child {
-        margin-left: 0;
-    }
-
-    #dir-size {
-        border: round #7aa2f7;
-    }
-
-    #file-size {
-        border: round #9ece6a;
-    }
-
-    #permissions {
-        border: round #f7768e;
-    }
-
-    #main-container {
-        height: 1fr;
-        background: #1a1b26;
-    }
-
-    #main-container Horizontal {
-        padding: 0 1;
-    }
-
-    FileList {
-        border: round #7dcfff;
-        background: #1f2335;
-        width: 1fr;
-        padding: 0 1;
-        margin: 0 1 0 0;
-    }
-
-    FilePreview {
-        border: round #bb9af7;
-        background: #1f2335;
-        width: 2fr;
-        padding: 0 1;
-        margin: 0;
-    }
-    """
-
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("/", "show_help", "Help"),
+        ("s", "show_settings", "Settings"),
         ("ctrl+f", "fuzzy_find", "Fuzzy Find"),
         ("j", "move_down", "Down"),
         ("k", "move_up", "Up"),
@@ -563,6 +696,98 @@ class FileBrowserApp(App):
         ("h", "go_back", "Back"),
         (".", "toggle_hidden", "Toggle Hidden"),
     ]
+
+    def __init__(self):
+        super().__init__()
+        self.current_scheme = "Tokyo Night"
+
+    def get_css(self, scheme_name: str) -> str:
+        """Generate CSS based on the selected color scheme."""
+        colors = COLOR_SCHEMES[scheme_name]
+        return f"""
+    Screen {{
+        background: {colors['background']};
+    }}
+
+    /* Shared scrollbar styling */
+    Static {{
+        scrollbar-color: {colors['border']};
+        scrollbar-color-hover: {colors['blue']};
+    }}
+
+    /* Horizontal container spacing */
+    Horizontal {{
+        width: 100%;
+        height: 100%;
+    }}
+
+    #info-container {{
+        height: 5;
+        dock: top;
+        background: {colors['background']};
+    }}
+
+    #info-container Horizontal {{
+        padding: 0 1;
+    }}
+
+    InfoBox {{
+        border: round {colors['border']};
+        background: {colors['surface_light']};
+        height: 100%;
+        width: 1fr;
+        padding: 0 1;
+        margin: 0 0 0 1;
+        color: {colors['text']};
+        content-align: center middle;
+    }}
+
+    InfoBox:first-child {{
+        margin-left: 0;
+    }}
+
+    #dir-size {{
+        border: round {colors['blue']};
+    }}
+
+    #file-size {{
+        border: round {colors['green']};
+    }}
+
+    #permissions {{
+        border: round {colors['pink']};
+    }}
+
+    #main-container {{
+        height: 1fr;
+        background: {colors['background']};
+    }}
+
+    #main-container Horizontal {{
+        padding: 0 1;
+    }}
+
+    FileList {{
+        border: round {colors['cyan']};
+        background: {colors['surface']};
+        width: 1fr;
+        padding: 0 1;
+        margin: 0 1 0 0;
+    }}
+
+    FilePreview {{
+        border: round {colors['purple_light']};
+        background: {colors['surface']};
+        width: 2fr;
+        padding: 0 1;
+        margin: 0;
+    }}
+    """
+
+    @property
+    def CSS(self) -> str:
+        """Return the CSS for the current color scheme."""
+        return self.get_css(self.current_scheme)
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -664,6 +889,20 @@ class FileBrowserApp(App):
     def action_show_help(self):
         """Show help dialog."""
         self.push_screen(HelpScreen())
+
+    def action_show_settings(self):
+        """Show settings dialog."""
+        self.push_screen(SettingsScreen(self.current_scheme), self.handle_scheme_change)
+
+    def handle_scheme_change(self, selected_scheme: str | None):
+        """Handle color scheme selection."""
+        if selected_scheme is None or selected_scheme == self.current_scheme:
+            return
+
+        self.current_scheme = selected_scheme
+        # Refresh CSS by reloading the stylesheet
+        self.stylesheet.reparse(self.get_css(selected_scheme))
+        self.refresh()
 
     def action_fuzzy_find(self):
         """Show fuzzy finder dialog."""
