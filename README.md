@@ -12,7 +12,8 @@ A modern, feature-rich terminal user interface (TUI) file browser built with Pyt
 
 ### File Preview
 - **Syntax highlighting** - Automatic language detection using Pygments
-- **Image preview** - ASCII art representation of images (JPG, PNG, GIF, BMP, WEBP, TIFF, ICO)
+- **Colorized image preview** - Full RGB color using Unicode half-block characters
+- **Supported formats** - JPG, PNG, GIF, BMP, WEBP, TIFF, ICO
 - **Smart preview** - Handles text files, images, binary files, and directories
 - **Large file handling** - Automatic truncation for files >1MB or >1000 lines
 - **Directory statistics** - Shows file and directory counts
@@ -163,7 +164,8 @@ The application includes three example custom themes:
 - **[Textual](https://github.com/Textualize/textual)** (>=6.6.0) - TUI framework
 - **[Pygments](https://pygments.org/)** (>=2.17.0) - Syntax highlighting
 - **[rapidfuzz](https://github.com/maxbachmann/RapidFuzz)** (>=3.0.0) - Fuzzy string matching
-- **[Pillow](https://python-pillow.org/)** (>=10.0.0) - Image processing for ASCII art previews
+- **[Markdown](https://python-markdown.github.io/)** (>=3.5.0) - Markdown rendering
+- **[Pillow](https://python-pillow.org/)** (>=10.0.0) - Image processing for colorized previews
 
 ## Development
 
