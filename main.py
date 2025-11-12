@@ -900,10 +900,12 @@ class FileBrowserApp(App):
             return
 
         self.current_scheme = selected_scheme
-        # Reload CSS by clearing and re-reading
-        self.stylesheet.clear()
-        self.stylesheet.read(self.CSS)
-        # Force a full refresh
+        # Force a complete app refresh by reinstalling CSS
+        # We need to access the private _stylesheet and replace it
+        from textual.css.stylesheet import Stylesheet
+        self._stylesheet = Stylesheet()
+        self._stylesheet.parse(self.CSS)
+        # Refresh all widgets
         self.refresh(layout=True, repaint=True)
 
     def action_fuzzy_find(self):
