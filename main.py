@@ -262,7 +262,7 @@ class SettingsScreen(ModalScreen[str | None]):
         with Container(id="settings-dialog"):
             yield Static("[bold cyan]Settings - Color Schemes[/bold cyan]", id="settings-title")
             yield ListView(id="settings-list")
-            yield Static("\n[dim]Use ↑/↓ to navigate, Enter to select, Esc/q to close[/dim]", id="settings-footer")
+            yield Static("\n[dim]Use ↑/↓ to preview themes, Enter to apply, Esc/q to cancel[/dim]", id="settings-footer")
 
     def on_mount(self) -> None:
         """Populate the list when mounted."""
@@ -278,14 +278,26 @@ class SettingsScreen(ModalScreen[str | None]):
 
         list_view.index = self.selected_index
 
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        """Preview theme when highlighted (before selection)."""
+        if event.list_view.index is not None:
+            preview_theme = self.themes[event.list_view.index]
+            # Update the app's theme for preview
+            self.app.theme = preview_theme
+
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        """Handle theme selection."""
+        """Handle theme selection (confirm with Enter)."""
         if event.list_view.index is not None:
             selected_theme = self.themes[event.list_view.index]
             self.dismiss(selected_theme)
+        else:
+            # If nothing selected, dismiss with current theme
+            self.dismiss(self.current_theme)
 
     def action_dismiss_settings(self) -> None:
-        """Dismiss the settings without selection."""
+        """Dismiss the settings without selection (cancel - restore original theme)."""
+        # Restore the original theme since user cancelled
+        self.app.theme = self.current_theme
         self.dismiss(None)
 
 
