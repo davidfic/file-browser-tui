@@ -4,6 +4,7 @@
 import os
 import json
 from pathlib import Path
+from PIL import Image
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import Static, Header, Footer, Label, Input, ListView, ListItem, Markdown
@@ -12,6 +13,7 @@ from textual.message import Message
 from textual.theme import Theme
 from rich.syntax import Syntax
 from rich.table import Table
+from rich.text import Text
 from rapidfuzz import fuzz, process
 
 
@@ -691,8 +693,20 @@ class FilePreview(Static):
             return
 
         try:
-            # Get file size
+            # Get file size and extension
             file_size = path.stat().st_size
+            suffix = path.suffix.lstrip('.').lower()
+
+            # Check if it's an image file
+            image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif', 'ico']
+            if suffix in image_extensions:
+                try:
+                    self._preview_image(path, file_size)
+                    return
+                except Exception as e:
+                    # If image preview fails, show error and continue to text preview
+                    self.update(f"[yellow]Could not preview image[/yellow]\n\n{str(e)}\n\nSize: {self._format_size(file_size)}")
+                    return
 
             # If file is too large, show warning
             if file_size > 1_000_000:  # 1MB
@@ -745,6 +759,73 @@ class FilePreview(Static):
             self.update("[red]Permission denied[/red]")
         except Exception as e:
             self.update(f"[red]Error: {str(e)}[/red]")
+
+    def _preview_image(self, path: Path, file_size: int):
+        """Preview an image file with ASCII art representation."""
+        try:
+            # Open the image
+            img = Image.open(path)
+
+            # Get image info
+            width, height = img.size
+            mode = img.mode
+            format_name = img.format or "Unknown"
+
+            # Create ASCII art representation
+            # Resize image to fit in preview (max 60 chars wide, 30 lines tall)
+            max_width = 60
+            max_height = 30
+
+            # Calculate aspect ratio
+            aspect_ratio = width / height
+
+            if width > max_width:
+                new_width = max_width
+                new_height = int(new_width / aspect_ratio / 2)  # Divide by 2 for char aspect
+            else:
+                new_width = width
+                new_height = int(height / 2)
+
+            if new_height > max_height:
+                new_height = max_height
+                new_width = int(new_height * aspect_ratio * 2)
+
+            # Resize image
+            img_small = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+            # Convert to grayscale
+            img_gray = img_small.convert('L')
+
+            # ASCII characters from darkest to lightest
+            ascii_chars = ' .:-=+*#%@'
+
+            # Build ASCII art
+            ascii_art = []
+            for y in range(img_gray.height):
+                row = []
+                for x in range(img_gray.width):
+                    pixel = img_gray.getpixel((x, y))
+                    # Map pixel value (0-255) to ASCII character
+                    char_index = int((pixel / 255) * (len(ascii_chars) - 1))
+                    row.append(ascii_chars[char_index])
+                ascii_art.append(''.join(row))
+
+            # Build info text
+            info_lines = [
+                f"[bold cyan]Image Preview[/bold cyan]",
+                "",
+                '\n'.join(ascii_art),
+                "",
+                f"[dim]Format:[/dim] {format_name}",
+                f"[dim]Dimensions:[/dim] {width}x{height}",
+                f"[dim]Mode:[/dim] {mode}",
+                f"[dim]Size:[/dim] {self._format_size(file_size)}",
+            ]
+
+            self.update('\n'.join(info_lines))
+
+        except Exception as e:
+            raise Exception(f"Image preview error: {str(e)}")
 
     def _format_size(self, size: int) -> str:
         """Format file size in human-readable format."""
