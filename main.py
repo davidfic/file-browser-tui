@@ -8,133 +8,118 @@ from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import Static, Header, Footer, Label, Input, ListView, ListItem, Markdown
 from textual.screen import ModalScreen
 from textual.message import Message
+from textual.theme import Theme
 from rich.syntax import Syntax
 from rich.table import Table
 from rapidfuzz import fuzz, process
 
 
-# Color scheme definitions
-COLOR_SCHEMES = {
-    "Tokyo Night": {
-        "background": "#1a1b26",
-        "surface": "#1f2335",
-        "surface_light": "#24283b",
-        "text": "#c0caf5",
-        "blue": "#7aa2f7",
-        "cyan": "#7dcfff",
-        "green": "#9ece6a",
-        "purple": "#9d7cd8",
-        "purple_light": "#bb9af7",
-        "pink": "#f7768e",
-        "yellow": "#e0af68",
-        "orange": "#ff9e64",
-        "border": "#565f89",
-    },
-    "Dracula": {
-        "background": "#282a36",
-        "surface": "#21222c",
-        "surface_light": "#343746",
-        "text": "#f8f8f2",
-        "blue": "#6272a4",
-        "cyan": "#8be9fd",
-        "green": "#50fa7b",
-        "purple": "#bd93f9",
-        "purple_light": "#bd93f9",
-        "pink": "#ff79c6",
-        "yellow": "#f1fa8c",
-        "orange": "#ffb86c",
-        "border": "#44475a",
-    },
-    "Nord": {
-        "background": "#2e3440",
-        "surface": "#3b4252",
-        "surface_light": "#434c5e",
-        "text": "#eceff4",
-        "blue": "#5e81ac",
-        "cyan": "#88c0d0",
-        "green": "#a3be8c",
-        "purple": "#b48ead",
-        "purple_light": "#b48ead",
-        "pink": "#d08770",
-        "yellow": "#ebcb8b",
-        "orange": "#d08770",
-        "border": "#4c566a",
-    },
-    "Catppuccin Mocha": {
-        "background": "#1e1e2e",
-        "surface": "#181825",
-        "surface_light": "#313244",
-        "text": "#cdd6f4",
-        "blue": "#89b4fa",
-        "cyan": "#89dceb",
-        "green": "#a6e3a1",
-        "purple": "#cba6f7",
-        "purple_light": "#f5c2e7",
-        "pink": "#f5c2e7",
-        "yellow": "#f9e2af",
-        "orange": "#fab387",
-        "border": "#45475a",
-    },
-    "Gruvbox Dark": {
-        "background": "#282828",
-        "surface": "#1d2021",
-        "surface_light": "#3c3836",
-        "text": "#ebdbb2",
-        "blue": "#458588",
-        "cyan": "#689d6a",
-        "green": "#98971a",
-        "purple": "#b16286",
-        "purple_light": "#d3869b",
-        "pink": "#d3869b",
-        "yellow": "#d79921",
-        "orange": "#d65d0e",
-        "border": "#504945",
-    },
-    "Solarized Dark": {
-        "background": "#002b36",
-        "surface": "#073642",
-        "surface_light": "#073642",
-        "text": "#839496",
-        "blue": "#268bd2",
-        "cyan": "#2aa198",
-        "green": "#859900",
-        "purple": "#6c71c4",
-        "purple_light": "#d33682",
-        "pink": "#d33682",
-        "yellow": "#b58900",
-        "orange": "#cb4b16",
-        "border": "#586e75",
-    },
-    "One Dark": {
-        "background": "#282c34",
-        "surface": "#21252b",
-        "surface_light": "#2c313c",
-        "text": "#abb2bf",
-        "blue": "#61afef",
-        "cyan": "#56b6c2",
-        "green": "#98c379",
-        "purple": "#c678dd",
-        "purple_light": "#c678dd",
-        "pink": "#e06c75",
-        "yellow": "#e5c07b",
-        "orange": "#d19a66",
-        "border": "#3e4451",
-    },
-    "Monokai Pro": {
-        "background": "#2d2a2e",
-        "surface": "#221f22",
-        "surface_light": "#403e41",
-        "text": "#fcfcfa",
-        "blue": "#78dce8",
-        "cyan": "#78dce8",
-        "green": "#a9dc76",
-        "purple": "#ab9df2",
-        "purple_light": "#ab9df2",
-        "pink": "#ff6188",
-        "yellow": "#ffd866",
-        "orange": "#fc9867",
-        "border": "#5b595c",
-    },
+# Define custom themes
+CUSTOM_THEMES = {
+    "tokyo-night": Theme(
+        name="tokyo-night",
+        primary="#7aa2f7",
+        secondary="#7dcfff",
+        warning="#e0af68",
+        error="#f7768e",
+        success="#9ece6a",
+        accent="#bb9af7",
+        background="#1a1b26",
+        surface="#24283b",
+        panel="#1f2335",
+        dark=True,
+    ),
+    "dracula": Theme(
+        name="dracula",
+        primary="#8be9fd",
+        secondary="#bd93f9",
+        warning="#f1fa8c",
+        error="#ff79c6",
+        success="#50fa7b",
+        accent="#ff79c6",
+        background="#282a36",
+        surface="#343746",
+        panel="#21222c",
+        dark=True,
+    ),
+    "nord": Theme(
+        name="nord",
+        primary="#88c0d0",
+        secondary="#5e81ac",
+        warning="#ebcb8b",
+        error="#d08770",
+        success="#a3be8c",
+        accent="#b48ead",
+        background="#2e3440",
+        surface="#434c5e",
+        panel="#3b4252",
+        dark=True,
+    ),
+    "catppuccin-mocha": Theme(
+        name="catppuccin-mocha",
+        primary="#89b4fa",
+        secondary="#89dceb",
+        warning="#f9e2af",
+        error="#f5c2e7",
+        success="#a6e3a1",
+        accent="#cba6f7",
+        background="#1e1e2e",
+        surface="#313244",
+        panel="#181825",
+        dark=True,
+    ),
+    "gruvbox-dark": Theme(
+        name="gruvbox-dark",
+        primary="#458588",
+        secondary="#689d6a",
+        warning="#d79921",
+        error="#d3869b",
+        success="#98971a",
+        accent="#b16286",
+        background="#282828",
+        surface="#3c3836",
+        panel="#1d2021",
+        dark=True,
+    ),
+    "solarized-dark": Theme(
+        name="solarized-dark",
+        primary="#268bd2",
+        secondary="#2aa198",
+        warning="#b58900",
+        error="#d33682",
+        success="#859900",
+        accent="#6c71c4",
+        background="#002b36",
+        surface="#073642",
+        panel="#073642",
+        dark=True,
+    ),
+    "one-dark": Theme(
+        name="one-dark",
+        primary="#61afef",
+        secondary="#56b6c2",
+        warning="#e5c07b",
+        error="#e06c75",
+        success="#98c379",
+        accent="#c678dd",
+        background="#282c34",
+        surface="#2c313c",
+        panel="#21252b",
+        dark=True,
+    ),
+    "monokai-pro": Theme(
+        name="monokai-pro",
+        primary="#78dce8",
+        secondary="#78dce8",
+        warning="#ffd866",
+        error="#ff6188",
+        success="#a9dc76",
+        accent="#ab9df2",
+        background="#2d2a2e",
+        surface="#403e41",
+        panel="#221f22",
+        dark=True,
+    ),
 }
 
 
@@ -250,14 +235,25 @@ class SettingsScreen(ModalScreen[str | None]):
         ("q", "dismiss_settings", "Close"),
     ]
 
-    def __init__(self, current_scheme: str):
+    def __init__(self, current_theme: str):
         super().__init__()
-        self.current_scheme = current_scheme
+        self.current_theme = current_theme
         self.selected_index = 0
-        self.schemes = list(COLOR_SCHEMES.keys())
-        # Find current scheme index
+        # Create display names for themes
+        self.theme_display_names = {
+            "tokyo-night": "Tokyo Night",
+            "dracula": "Dracula",
+            "nord": "Nord",
+            "catppuccin-mocha": "Catppuccin Mocha",
+            "gruvbox-dark": "Gruvbox Dark",
+            "solarized-dark": "Solarized Dark",
+            "one-dark": "One Dark",
+            "monokai-pro": "Monokai Pro",
+        }
+        self.themes = list(CUSTOM_THEMES.keys())
+        # Find current theme index
         try:
-            self.selected_index = self.schemes.index(current_scheme)
+            self.selected_index = self.themes.index(current_theme)
         except ValueError:
             self.selected_index = 0
 
@@ -272,20 +268,21 @@ class SettingsScreen(ModalScreen[str | None]):
         """Populate the list when mounted."""
         list_view = self.query_one("#settings-list", ListView)
 
-        for i, scheme_name in enumerate(self.schemes):
+        for i, theme_key in enumerate(self.themes):
+            display_name = self.theme_display_names.get(theme_key, theme_key)
             if i == self.selected_index:
-                label = Label(f"▸ [bold cyan]{scheme_name}[/bold cyan]  [dim](current)[/dim]")
+                label = Label(f"▸ [bold cyan]{display_name}[/bold cyan]  [dim](current)[/dim]")
             else:
-                label = Label(f"  {scheme_name}")
+                label = Label(f"  {display_name}")
             list_view.append(ListItem(label))
 
         list_view.index = self.selected_index
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        """Handle scheme selection."""
+        """Handle theme selection."""
         if event.list_view.index is not None:
-            selected_scheme = self.schemes[event.list_view.index]
-            self.dismiss(selected_scheme)
+            selected_theme = self.themes[event.list_view.index]
+            self.dismiss(selected_theme)
 
     def action_dismiss_settings(self) -> None:
         """Dismiss the settings without selection."""
@@ -682,6 +679,86 @@ class FilePreview(Static):
 class FileBrowserApp(App):
     """A Textual file browser application."""
 
+    CSS = """
+    Screen {
+        background: $background;
+    }
+
+    /* Shared scrollbar styling */
+    Static {
+        scrollbar-color: $primary;
+        scrollbar-color-hover: $secondary;
+    }
+
+    /* Horizontal container spacing */
+    Horizontal {
+        width: 100%;
+        height: 100%;
+    }
+
+    #info-container {
+        height: 5;
+        dock: top;
+        background: $background;
+    }
+
+    #info-container Horizontal {
+        padding: 0 1;
+    }
+
+    InfoBox {
+        border: round $primary;
+        background: $surface;
+        height: 100%;
+        width: 1fr;
+        padding: 0 1;
+        margin: 0 0 0 1;
+        color: $text;
+        content-align: center middle;
+    }
+
+    InfoBox:first-child {
+        margin-left: 0;
+    }
+
+    #dir-size {
+        border: round $primary;
+    }
+
+    #file-size {
+        border: round $success;
+    }
+
+    #permissions {
+        border: round $error;
+    }
+
+    #main-container {
+        height: 1fr;
+        background: $background;
+    }
+
+    #main-container Horizontal {
+        padding: 0 1;
+    }
+
+    FileList {
+        border: round $secondary;
+        background: $panel;
+        width: 1fr;
+        padding: 0 1;
+        margin: 0 1 0 0;
+    }
+
+    FilePreview {
+        border: round $accent;
+        background: $panel;
+        width: 2fr;
+        padding: 0 1;
+        margin: 0;
+    }
+    """
+
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("/", "show_help", "Help"),
@@ -699,95 +776,11 @@ class FileBrowserApp(App):
 
     def __init__(self):
         super().__init__()
-        self.current_scheme = "Tokyo Night"
-
-    def get_css(self, scheme_name: str) -> str:
-        """Generate CSS based on the selected color scheme."""
-        colors = COLOR_SCHEMES[scheme_name]
-        return f"""
-    Screen {{
-        background: {colors['background']};
-    }}
-
-    /* Shared scrollbar styling */
-    Static {{
-        scrollbar-color: {colors['border']};
-        scrollbar-color-hover: {colors['blue']};
-    }}
-
-    /* Horizontal container spacing */
-    Horizontal {{
-        width: 100%;
-        height: 100%;
-    }}
-
-    #info-container {{
-        height: 5;
-        dock: top;
-        background: {colors['background']};
-    }}
-
-    #info-container Horizontal {{
-        padding: 0 1;
-    }}
-
-    InfoBox {{
-        border: round {colors['border']};
-        background: {colors['surface_light']};
-        height: 100%;
-        width: 1fr;
-        padding: 0 1;
-        margin: 0 0 0 1;
-        color: {colors['text']};
-        content-align: center middle;
-    }}
-
-    InfoBox:first-child {{
-        margin-left: 0;
-    }}
-
-    #dir-size {{
-        border: round {colors['blue']};
-    }}
-
-    #file-size {{
-        border: round {colors['green']};
-    }}
-
-    #permissions {{
-        border: round {colors['pink']};
-    }}
-
-    #main-container {{
-        height: 1fr;
-        background: {colors['background']};
-    }}
-
-    #main-container Horizontal {{
-        padding: 0 1;
-    }}
-
-    FileList {{
-        border: round {colors['cyan']};
-        background: {colors['surface']};
-        width: 1fr;
-        padding: 0 1;
-        margin: 0 1 0 0;
-    }}
-
-    FilePreview {{
-        border: round {colors['purple_light']};
-        background: {colors['surface']};
-        width: 2fr;
-        padding: 0 1;
-        margin: 0;
-    }}
-    """
-
-    @property
-    def CSS(self) -> str:
-        """Return the CSS for the current color scheme."""
-        return self.get_css(self.current_scheme)
+        # Register all custom themes
+        for theme in CUSTOM_THEMES.values():
+            self.register_theme(theme)
+        # Set default theme
+        self.theme = "tokyo-night"
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -892,21 +885,14 @@ class FileBrowserApp(App):
 
     def action_show_settings(self):
         """Show settings dialog."""
-        self.push_screen(SettingsScreen(self.current_scheme), self.handle_scheme_change)
+        self.push_screen(SettingsScreen(self.theme), self.handle_theme_change)
 
-    def handle_scheme_change(self, selected_scheme: str | None):
-        """Handle color scheme selection."""
-        if selected_scheme is None or selected_scheme == self.current_scheme:
+    def handle_theme_change(self, selected_theme: str | None):
+        """Handle theme selection."""
+        if selected_theme is None or selected_theme == self.theme:
             return
-
-        self.current_scheme = selected_scheme
-        # Force a complete app refresh by reinstalling CSS
-        # We need to access the private _stylesheet and replace it
-        from textual.css.stylesheet import Stylesheet
-        self._stylesheet = Stylesheet()
-        self._stylesheet.parse(self.CSS)
-        # Refresh all widgets
-        self.refresh(layout=True, repaint=True)
+        # Simply set the theme - Textual handles the rest!
+        self.theme = selected_theme
 
     def action_fuzzy_find(self):
         """Show fuzzy finder dialog."""
