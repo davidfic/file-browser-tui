@@ -2,6 +2,7 @@
 """A TUI file browser built with Textual."""
 
 import os
+import json
 from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
@@ -123,6 +124,51 @@ CUSTOM_THEMES = {
 }
 
 
+def load_custom_themes_from_file(themes_file: Path = Path("themes.json")) -> dict[str, Theme]:
+    """Load custom themes from a JSON file.
+
+    Returns a dictionary of theme_name -> Theme objects.
+    If the file doesn't exist or has errors, returns an empty dict.
+    """
+    if not themes_file.exists():
+        return {}
+
+    try:
+        with open(themes_file, 'r') as f:
+            data = json.load(f)
+
+        loaded_themes = {}
+        for theme_data in data.get("custom_themes", []):
+            # Validate required fields
+            if "name" not in theme_data or "primary" not in theme_data:
+                continue
+
+            # Extract display name (optional)
+            display_name = theme_data.pop("display_name", None)
+
+            # Convert 'dark' field from string to boolean if needed
+            if "dark" in theme_data and isinstance(theme_data["dark"], str):
+                theme_data["dark"] = theme_data["dark"].lower() == "true"
+
+            # Create Theme object
+            try:
+                theme = Theme(**theme_data)
+                theme_name = theme_data["name"]
+                loaded_themes[theme_name] = theme
+
+                # Store display name for later use
+                if display_name:
+                    theme._display_name = display_name
+            except Exception as e:
+                # Skip invalid themes
+                continue
+
+        return loaded_themes
+    except Exception as e:
+        # Return empty dict if file is malformed
+        return {}
+
+
 class HelpScreen(ModalScreen[None]):
     """Modal screen showing keybindings help."""
 
@@ -235,11 +281,13 @@ class SettingsScreen(ModalScreen[str | None]):
         ("q", "dismiss_settings", "Close"),
     ]
 
-    def __init__(self, current_theme: str):
+    def __init__(self, current_theme: str, all_themes: dict[str, Theme]):
         super().__init__()
         self.current_theme = current_theme
         self.selected_index = 0
-        # Create display names for themes
+        self.all_themes = all_themes
+
+        # Create display names for built-in themes
         self.theme_display_names = {
             "tokyo-night": "Tokyo Night",
             "dracula": "Dracula",
@@ -250,7 +298,14 @@ class SettingsScreen(ModalScreen[str | None]):
             "one-dark": "One Dark",
             "monokai-pro": "Monokai Pro",
         }
-        self.themes = list(CUSTOM_THEMES.keys())
+
+        # Add display names from loaded themes
+        for theme_name, theme in all_themes.items():
+            if hasattr(theme, '_display_name'):
+                self.theme_display_names[theme_name] = theme._display_name
+
+        self.themes = list(all_themes.keys())
+
         # Find current theme index
         try:
             self.selected_index = self.themes.index(current_theme)
@@ -788,9 +843,16 @@ class FileBrowserApp(App):
 
     def __init__(self):
         super().__init__()
-        # Register all custom themes
-        for theme in CUSTOM_THEMES.values():
+
+        # Load and merge themes from file
+        self.all_themes = CUSTOM_THEMES.copy()
+        loaded_themes = load_custom_themes_from_file()
+        self.all_themes.update(loaded_themes)
+
+        # Register all themes (built-in + loaded)
+        for theme in self.all_themes.values():
             self.register_theme(theme)
+
         # Set default theme
         self.theme = "tokyo-night"
 
@@ -897,7 +959,7 @@ class FileBrowserApp(App):
 
     def action_show_settings(self):
         """Show settings dialog."""
-        self.push_screen(SettingsScreen(self.theme), self.handle_theme_change)
+        self.push_screen(SettingsScreen(self.theme, self.all_themes), self.handle_theme_change)
 
     def handle_theme_change(self, selected_theme: str | None):
         """Handle theme selection."""

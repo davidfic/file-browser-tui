@@ -27,6 +27,11 @@ A modern, feature-rich terminal user interface (TUI) file browser built with Pyt
 - **Fuzzy matching** - Powered by rapidfuzz for intelligent string matching
 - **Fast navigation** - Jump directly to any file or directory
 
+### Theming
+- **8 built-in themes** - Tokyo Night, Dracula, Nord, Catppuccin Mocha, Gruvbox Dark, Solarized Dark, One Dark, Monokai Pro
+- **Live theme preview** - See themes change instantly as you navigate the settings
+- **Custom theme support** - Import your own color schemes via `themes.json`
+
 ## Installation
 
 ### Prerequisites
@@ -95,6 +100,63 @@ The fuzzy finder:
 - Shows up to 100 best matches
 - Uses intelligent fuzzy matching (e.g., "mpy" matches "main.py")
 
+## Custom Themes
+
+You can create your own color schemes by editing the `themes.json` file in the project directory.
+
+### Theme File Format
+
+```json
+{
+  "custom_themes": [
+    {
+      "name": "my-theme",
+      "display_name": "My Custom Theme",
+      "primary": "#7aa2f7",
+      "secondary": "#7dcfff",
+      "warning": "#e0af68",
+      "error": "#f7768e",
+      "success": "#9ece6a",
+      "accent": "#bb9af7",
+      "background": "#1a1b26",
+      "surface": "#24283b",
+      "panel": "#1f2335",
+      "dark": true
+    }
+  ]
+}
+```
+
+### Theme Properties
+
+- **name** (required) - Internal theme identifier (use kebab-case, e.g., "my-theme")
+- **display_name** (optional) - Human-readable name shown in settings
+- **primary** (required) - Primary accent color
+- **secondary** (optional) - Secondary accent color
+- **warning** (optional) - Warning state color
+- **error** (optional) - Error state color
+- **success** (optional) - Success state color
+- **accent** (optional) - Accent color for highlights
+- **background** (optional) - Main background color
+- **surface** (optional) - Surface/card background color
+- **panel** (optional) - Panel background color
+- **dark** (optional) - Whether this is a dark theme (true/false)
+
+All colors should be in hex format (e.g., "#1a1b26").
+
+### Using Custom Themes
+
+1. Edit `themes.json` and add your custom theme(s)
+2. Run the application
+3. Press `s` to open settings
+4. Your custom themes will appear in the list alongside built-in themes
+5. Navigate with arrow keys to preview, press Enter to apply
+
+The application includes three example custom themes:
+- **Forest Green** - Nature-inspired green palette
+- **Ocean Blue** - Deep ocean blue palette
+- **Sunset Orange** - Warm sunset orange palette
+
 ## Dependencies
 
 - **[Textual](https://github.com/Textualize/textual)** (>=6.6.0) - TUI framework
@@ -108,6 +170,8 @@ The fuzzy finder:
 ```
 file-browser-tui/
   main.py              # Main application code
+  themes.json          # Custom color scheme definitions
+  test_themes.py       # Theme system tests
   pyproject.toml       # Project metadata and dependencies
   README.md            # This file
   TODO.md              # Future enhancements

@@ -1,0 +1,48 @@
+{
+  "_comment": "Custom color schemes for the File Browser TUI",
+  "_instructions": "Add your custom themes here. Each theme must have at minimum 'name' and 'primary' fields.",
+  "custom_themes": [
+    {
+      "name": "forest-green",
+      "display_name": "Forest Green",
+      "primary": "#2d6a4f",
+      "secondary": "#52b788",
+      "warning": "#d4a373",
+      "error": "#d62828",
+      "success": "#74c69d",
+      "accent": "#40916c",
+      "background": "#081c15",
+      "surface": "#1b4332",
+      "panel": "#081c15",
+      "dark": true
+    },
+    {
+      "name": "ocean-blue",
+      "display_name": "Ocean Blue",
+      "primary": "#4895ef",
+      "secondary": "#4cc9f0",
+      "warning": "#f4a261",
+      "error": "#e63946",
+      "success": "#06ffa5",
+      "accent": "#7209b7",
+      "background": "#03045e",
+      "surface": "#0077b6",
+      "panel": "#023e8a",
+      "dark": true
+    },
+    {
+      "name": "sunset-orange",
+      "display_name": "Sunset Orange",
+      "primary": "#ff6b35",
+      "secondary": "#f7931e",
+      "warning": "#fdc500",
+      "error": "#c1121f",
+      "success": "#99d98c",
+      "accent": "#f72585",
+      "background": "#1a1423",
+      "surface": "#2d1b2e",
+      "panel": "#1a1423",
+      "dark": true
+    }
+  ]
+}
