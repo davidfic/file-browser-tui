@@ -62,8 +62,8 @@ class HelpScreen(ModalScreen[None]):
             table.add_column("Key", style="bold green")
             table.add_column("Action", style="white")
 
-            table.add_row("j / ↓", "Move selection down")
-            table.add_row("k / ↑", "Move selection up")
+            table.add_row("j / Down", "Move selection down")
+            table.add_row("k / Up", "Move selection up")
             table.add_row("l / Enter", "Enter directory or select file")
             table.add_row("h", "Go back to parent directory")
             table.add_row(".", "Toggle hidden files")
@@ -206,27 +206,27 @@ class FuzzyFinderScreen(ModalScreen[Path | None]):
             except ValueError:
                 path_str = str(file_path)
 
-            # Add icon based on type
+            # Add prefix based on type
             if file_path.is_dir():
-                icon = "📁"
-                label = f"{icon} [bold #7dcfff]{path_str}/[/bold #7dcfff]"
+                prefix = "▸"
+                label = f" {prefix} [bold #7dcfff]{path_str}/[/bold #7dcfff]"
             else:
                 suffix = file_path.suffix.lower()
                 if suffix in ['.py']:
-                    icon = "🐍"
+                    prefix = "[#7dcfff]●[/#7dcfff]"
                 elif suffix in ['.js', '.ts', '.jsx', '.tsx']:
-                    icon = "📜"
+                    prefix = "[#e0af68]●[/#e0af68]"
                 elif suffix in ['.md', '.txt', '.rst']:
-                    icon = "📝"
+                    prefix = "[#9ece6a]●[/#9ece6a]"
                 elif suffix in ['.json', '.yaml', '.yml', '.toml']:
-                    icon = "⚙️"
+                    prefix = "[#bb9af7]●[/#bb9af7]"
                 elif suffix in ['.jpg', '.jpeg', '.png', '.gif', '.svg']:
-                    icon = "🖼️"
+                    prefix = "[#f7768e]●[/#f7768e]"
                 elif suffix in ['.zip', '.tar', '.gz', '.bz2']:
-                    icon = "📦"
+                    prefix = "[#ff9e64]●[/#ff9e64]"
                 else:
-                    icon = "📄"
-                label = f"{icon} [#c0caf5]{path_str}[/#c0caf5]"
+                    prefix = "·"
+                label = f" {prefix} [#c0caf5]{path_str}[/#c0caf5]"
 
             results_list.append(ListItem(Label(label)))
 
@@ -299,29 +299,29 @@ class FileList(Static):
             # Determine the display name
             if i == 0 and entry == self.current_path.parent:
                 name = ".."
-                icon = "📁"
+                prefix = "[dim]◄[/dim]"
             else:
                 name = entry.name
-                # Add icon based on type
+                # Add prefix based on type
                 if entry.is_dir():
-                    icon = "📁"
+                    prefix = "▸"
                 else:
-                    # Add file type icons
+                    # Add file type prefixes
                     suffix = entry.suffix.lower()
                     if suffix in ['.py']:
-                        icon = "🐍"
+                        prefix = "[#7dcfff]●[/#7dcfff]"
                     elif suffix in ['.js', '.ts', '.jsx', '.tsx']:
-                        icon = "📜"
+                        prefix = "[#e0af68]●[/#e0af68]"
                     elif suffix in ['.md', '.txt', '.rst']:
-                        icon = "📝"
+                        prefix = "[#9ece6a]●[/#9ece6a]"
                     elif suffix in ['.json', '.yaml', '.yml', '.toml']:
-                        icon = "⚙️"
+                        prefix = "[#bb9af7]●[/#bb9af7]"
                     elif suffix in ['.jpg', '.jpeg', '.png', '.gif', '.svg']:
-                        icon = "🖼️"
+                        prefix = "[#f7768e]●[/#f7768e]"
                     elif suffix in ['.zip', '.tar', '.gz', '.bz2']:
-                        icon = "📦"
+                        prefix = "[#ff9e64]●[/#ff9e64]"
                     else:
-                        icon = "📄"
+                        prefix = "·"
 
             # Color based on type
             if entry.is_dir():
@@ -331,9 +331,9 @@ class FileList(Static):
 
             # Highlight selected item
             if i == self.selected_index:
-                lines.append(f"[reverse][#f7768e]{icon}[/#f7768e] {colored_name}[/reverse]")
+                lines.append(f"[reverse] {prefix} {colored_name} [/reverse]")
             else:
-                lines.append(f"{icon} {colored_name}")
+                lines.append(f" {prefix} {colored_name}")
 
         self.update("\n".join(lines))
 
@@ -475,20 +475,53 @@ class FileBrowserApp(App):
         background: #1a1b26;
     }
 
+    /* Shared scrollbar styling */
+    Static {
+        scrollbar-color: #565f89;
+        scrollbar-color-hover: #7aa2f7;
+    }
+
+    /* Horizontal container spacing */
+    Horizontal {
+        width: 100%;
+        height: 100%;
+    }
+
     #info-container {
         height: 5;
         dock: top;
         background: #1a1b26;
     }
 
+    #info-container Horizontal {
+        padding: 0 1;
+    }
+
     InfoBox {
-        border: round #7aa2f7;
+        border: round #565f89;
         background: #24283b;
         height: 100%;
         width: 1fr;
-        padding: 1;
-        margin: 0 1;
+        padding: 0 1;
+        margin: 0 0 0 1;
         color: #c0caf5;
+        content-align: center middle;
+    }
+
+    InfoBox:first-child {
+        margin-left: 0;
+    }
+
+    #dir-size {
+        border: round #7aa2f7;
+    }
+
+    #file-size {
+        border: round #9ece6a;
+    }
+
+    #permissions {
+        border: round #f7768e;
     }
 
     #main-container {
@@ -496,24 +529,24 @@ class FileBrowserApp(App):
         background: #1a1b26;
     }
 
+    #main-container Horizontal {
+        padding: 0 1;
+    }
+
     FileList {
-        border: round #9d7cd8;
+        border: round #7dcfff;
         background: #1f2335;
-        width: 40%;
-        padding: 1;
-        margin: 0 1;
-        scrollbar-color: #565f89;
-        scrollbar-color-hover: #7aa2f7;
+        width: 1fr;
+        padding: 0 1;
+        margin: 0 1 0 0;
     }
 
     FilePreview {
         border: round #bb9af7;
         background: #1f2335;
-        width: 60%;
-        padding: 1;
-        margin: 0 1;
-        scrollbar-color: #565f89;
-        scrollbar-color-hover: #7aa2f7;
+        width: 2fr;
+        padding: 0 1;
+        margin: 0;
     }
     """
 
