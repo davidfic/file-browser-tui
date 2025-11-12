@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
-from textual.widgets import Static, Header, Footer, Label, Input, ListView, ListItem
+from textual.widgets import Static, Header, Footer, Label, Input, ListView, ListItem, Markdown
 from textual.screen import ModalScreen
 from textual.message import Message
 from rich.syntax import Syntax
@@ -19,21 +19,30 @@ class HelpScreen(ModalScreen[None]):
     CSS = """
     HelpScreen {
         align: center middle;
-        background: $boost 50%;
+        background: #00000099;
     }
 
     #help-dialog {
         width: 60;
         height: auto;
         max-height: 80%;
-        border: thick $primary;
-        background: $panel;
+        border: thick #7dcfff;
+        background: #1f2335;
         padding: 1 2;
     }
 
     #help-content {
         width: 100%;
         height: auto;
+        color: #c0caf5;
+    }
+
+    #help-title {
+        color: #7dcfff;
+    }
+
+    #help-footer {
+        color: #565f89;
     }
     """
 
@@ -77,26 +86,45 @@ class FuzzyFinderScreen(ModalScreen[Path | None]):
     CSS = """
     FuzzyFinderScreen {
         align: center middle;
-        background: $boost 50%;
+        background: #00000099;
     }
 
     #fuzzy-dialog {
         width: 80;
         height: 30;
-        border: thick $primary;
-        background: $panel;
+        border: thick #f7768e;
+        background: #1f2335;
     }
 
     #fuzzy-input {
         dock: top;
         width: 100%;
         margin: 1;
+        background: #24283b;
+        border: round #565f89;
+        color: #c0caf5;
+    }
+
+    #fuzzy-input:focus {
+        border: round #7aa2f7;
     }
 
     #fuzzy-results {
         height: 1fr;
         width: 100%;
         margin: 0 1 1 1;
+        background: #1f2335;
+        scrollbar-color: #565f89;
+        scrollbar-color-hover: #7aa2f7;
+    }
+
+    #fuzzy-results > ListItem {
+        background: #1f2335;
+        color: #c0caf5;
+    }
+
+    #fuzzy-results > ListItem:hover {
+        background: #292e42;
     }
     """
 
@@ -174,18 +202,33 @@ class FuzzyFinderScreen(ModalScreen[Path | None]):
         for file_path in self.filtered_files:
             try:
                 rel_path = file_path.relative_to(self.current_path)
-                if file_path.is_dir():
-                    label = f"[cyan]{rel_path}/[/cyan]"
-                else:
-                    label = str(rel_path)
-                results_list.append(ListItem(Label(label)))
+                path_str = str(rel_path)
             except ValueError:
-                # Handle case where path is not relative to current_path
-                if file_path.is_dir():
-                    label = f"[cyan]{file_path}/[/cyan]"
+                path_str = str(file_path)
+
+            # Add icon based on type
+            if file_path.is_dir():
+                icon = "📁"
+                label = f"{icon} [bold #7dcfff]{path_str}/[/bold #7dcfff]"
+            else:
+                suffix = file_path.suffix.lower()
+                if suffix in ['.py']:
+                    icon = "🐍"
+                elif suffix in ['.js', '.ts', '.jsx', '.tsx']:
+                    icon = "📜"
+                elif suffix in ['.md', '.txt', '.rst']:
+                    icon = "📝"
+                elif suffix in ['.json', '.yaml', '.yml', '.toml']:
+                    icon = "⚙️"
+                elif suffix in ['.jpg', '.jpeg', '.png', '.gif', '.svg']:
+                    icon = "🖼️"
+                elif suffix in ['.zip', '.tar', '.gz', '.bz2']:
+                    icon = "📦"
                 else:
-                    label = str(file_path)
-                results_list.append(ListItem(Label(label)))
+                    icon = "📄"
+                label = f"{icon} [#c0caf5]{path_str}[/#c0caf5]"
+
+            results_list.append(ListItem(Label(label)))
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle file selection."""
@@ -256,18 +299,41 @@ class FileList(Static):
             # Determine the display name
             if i == 0 and entry == self.current_path.parent:
                 name = ".."
+                icon = "📁"
             else:
                 name = entry.name
+                # Add icon based on type
+                if entry.is_dir():
+                    icon = "📁"
+                else:
+                    # Add file type icons
+                    suffix = entry.suffix.lower()
+                    if suffix in ['.py']:
+                        icon = "🐍"
+                    elif suffix in ['.js', '.ts', '.jsx', '.tsx']:
+                        icon = "📜"
+                    elif suffix in ['.md', '.txt', '.rst']:
+                        icon = "📝"
+                    elif suffix in ['.json', '.yaml', '.yml', '.toml']:
+                        icon = "⚙️"
+                    elif suffix in ['.jpg', '.jpeg', '.png', '.gif', '.svg']:
+                        icon = "🖼️"
+                    elif suffix in ['.zip', '.tar', '.gz', '.bz2']:
+                        icon = "📦"
+                    else:
+                        icon = "📄"
 
-            # Add directory indicator
+            # Color based on type
             if entry.is_dir():
-                name = f"[cyan]{name}/[/cyan]"
+                colored_name = f"[bold #7dcfff]{name}/[/bold #7dcfff]"
+            else:
+                colored_name = f"[#c0caf5]{name}[/#c0caf5]"
 
             # Highlight selected item
             if i == self.selected_index:
-                lines.append(f"[reverse]{name}[/reverse]")
+                lines.append(f"[reverse][#f7768e]{icon}[/#f7768e] {colored_name}[/reverse]")
             else:
-                lines.append(name)
+                lines.append(f"{icon} {colored_name}")
 
         self.update("\n".join(lines))
 
@@ -346,7 +412,7 @@ class FilePreview(Static):
                 return
 
             # Try to read as text
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, 'r', encoding='utf-8', errors='replace') as f:
                 # Limit to first 1000 lines
                 lines = []
                 for i, line in enumerate(f):
@@ -360,19 +426,31 @@ class FilePreview(Static):
                     self.update("[dim]Empty file[/dim]")
                     return
 
-                # Try to apply syntax highlighting using Rich
-                try:
-                    # Get file extension for syntax detection
-                    suffix = path.suffix.lstrip('.')
-                    if suffix:
-                        syntax = Syntax(content, suffix, theme="monokai", line_numbers=False)
-                        self.update(syntax)
-                    else:
-                        # No extension, display as plain text
+                # Get file extension for syntax detection
+                suffix = path.suffix.lstrip('.').lower()
+
+                # Render markdown files with Textual's Markdown widget
+                if suffix in ['md', 'markdown']:
+                    try:
+                        # Create a Markdown widget inline
+                        from rich.markdown import Markdown as RichMarkdown
+                        md = RichMarkdown(content)
+                        self.update(md)
+                    except Exception:
+                        # Fallback to plain text if markdown rendering fails
                         self.update(content)
-                except Exception:
-                    # If syntax highlighting fails, display as plain text
-                    self.update(content)
+                else:
+                    # Try to apply syntax highlighting using Rich
+                    try:
+                        if suffix:
+                            syntax = Syntax(content, suffix, theme="monokai", line_numbers=False)
+                            self.update(syntax)
+                        else:
+                            # No extension, display as plain text
+                            self.update(content)
+                    except Exception:
+                        # If syntax highlighting fails, display as plain text
+                        self.update(content)
         except UnicodeDecodeError:
             self.update(f"[yellow]Binary file[/yellow]\n\nSize: {self._format_size(file_size)}")
         except PermissionError:
@@ -394,38 +472,48 @@ class FileBrowserApp(App):
 
     CSS = """
     Screen {
-        background: $surface;
+        background: #1a1b26;
     }
 
     #info-container {
         height: 5;
         dock: top;
+        background: #1a1b26;
     }
 
     InfoBox {
-        border: solid $primary;
+        border: round #7aa2f7;
+        background: #24283b;
         height: 100%;
         width: 1fr;
         padding: 1;
         margin: 0 1;
+        color: #c0caf5;
     }
 
     #main-container {
         height: 1fr;
+        background: #1a1b26;
     }
 
     FileList {
-        border: solid $primary;
+        border: round #9d7cd8;
+        background: #1f2335;
         width: 40%;
         padding: 1;
         margin: 0 1;
+        scrollbar-color: #565f89;
+        scrollbar-color-hover: #7aa2f7;
     }
 
     FilePreview {
-        border: solid $primary;
+        border: round #bb9af7;
+        background: #1f2335;
         width: 60%;
         padding: 1;
         margin: 0 1;
+        scrollbar-color: #565f89;
+        scrollbar-color-hover: #7aa2f7;
     }
     """
 
