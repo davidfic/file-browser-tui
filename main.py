@@ -900,13 +900,11 @@ class FileBrowserApp(App):
             return
 
         self.current_scheme = selected_scheme
-        # Force CSS reload by clearing rules and re-reading CSS property
-        self.stylesheet.rules.clear()
-        self.stylesheet.parse_declarations("")
-        # Reapply CSS
-        css = self.CSS
-        self.stylesheet.parse_declarations(css)
-        self.refresh(layout=True)
+        # Reload CSS by clearing and re-reading
+        self.stylesheet.clear()
+        self.stylesheet.read(self.CSS)
+        # Force a full refresh
+        self.refresh(layout=True, repaint=True)
 
     def action_fuzzy_find(self):
         """Show fuzzy finder dialog."""
