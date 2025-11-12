@@ -1,0 +1,44 @@
+meta_guidelines:
+  purpose: "Defines all coding, testing, documentation, and cleanup standards for the AI code editor."
+  enforcement:
+    - Always reference these rules after every operation, edit, or commit.
+    - After each code generation, verify:
+      - All relevant rules are followed.
+      - Critical requirements are satisfied.
+      - No drift or deviations exist.
+    - Prioritize any section marked as `critical: true` when conflicts occur.
+    - Optionally summarize rule compliance when outputting results.
+
+rules:
+  plan_logging:
+    purpose: "Automatically show and save all plans generated in plan mode with descriptive titles for traceability and review."
+    applies_to:
+      - Plan mode sessions that involve code analysis, design, or refactoring
+      - Any time a planning step is generated before agent execution
+    behavior:
+      - Always display the plan output in chat before execution begins
+      - Save each plan as a Markdown file under `.claude/plans/`
+      - Use descriptive file naming with variables for readability and traceability
+    filename_template: ".claude/plans/${timestamp}-${task}.md"
+    file_header: |
+      # Plan Summary
+      **Task:** ${task}
+      **Branch:** ${branch}
+      **Timestamp:** ${timestamp}
+
+      ---
+    organization:
+      - Automatically create subfolders by branch or date if configured
+      - Ignore `.claude/plans/` in version control to prevent clutter
+      - Retain recent plans for debugging or process audits
+    variables:
+      - ${timestamp}: ISO timestamp when the plan was created
+      - ${task}: Sanitized short version of the user request or goal
+      - ${branch}: Current Git branch name (if applicable)
+      - ${file}: Active file when plan was generated
+    enforcement:
+      - Always produce a visible plan summary before edits occur
+      - If a plan cannot be saved, output a warning in chat
+      - Never execute a plan silently without displaying it to the user first
+      - When plan implementation is complete, review the original plan and the current .cursorrules for alignment.
+      - Do not modify the plan to match an incorrect implementation; instead, notify the user of any divergence.

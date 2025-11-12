@@ -1,0 +1,11 @@
+[project]
+name = "file-browser-tui"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "textual>=6.6.0",
+    "pygments>=2.17.0",
+    "rapidfuzz>=3.0.0",
+]
