@@ -900,8 +900,9 @@ class FileBrowserApp(App):
             return
 
         self.current_scheme = selected_scheme
-        # Refresh by updating the CSS property and reparsing
-        self.stylesheet.parse(self.get_css(selected_scheme))
+        # Reload stylesheet by setting the source and calling parse
+        self.stylesheet.source = self.get_css(selected_scheme)
+        self.stylesheet.parse()
         self.refresh(layout=True)
 
     def action_fuzzy_find(self):
